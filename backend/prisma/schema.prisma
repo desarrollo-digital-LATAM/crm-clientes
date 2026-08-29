@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  ADMIN
+  MEMBER
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ActivityType {
+  NOTE
+  CALL
+  WHATSAPP
+  EMAIL
+  MEETING
+  STATUS_CHANGE
+  FOLLOW_UP
+}
+
+model User {
+  id         String         @id @default(uuid()) @db.Uuid
+  authUserId String         @unique @db.Uuid
+  email      String         @unique
+  name       String?
+  role       UserRole       @default(MEMBER)
+  leads      Lead[]         @relation("LeadAssignee")
+  activities LeadActivity[]
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+}
+
+model Lead {
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String
+  company         String?
+  email           String?
+  phone           String?
+  serviceInterest String?
+  message         String?
+  source          String         @default("MANUAL")
+  status          LeadStatus     @default(NEW)
+  estimatedBudget Decimal?       @db.Decimal(12, 2)
+  notes           String?
+  nextFollowUpAt  DateTime?
+  lastContactAt   DateTime?
+  assignedUserId  String?        @db.Uuid
+  assignedUser    User?          @relation("LeadAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
+  activities      LeadActivity[]
+  client          Client?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status])
+  @@index([nextFollowUpAt])
+  @@index([source])
+  @@index([createdAt])
+}
+
+model LeadActivity {
+  id          String       @id @default(uuid()) @db.Uuid
+  type        ActivityType
+  description String
+  createdAt   DateTime     @default(now())
+  leadId      String       @db.Uuid
+  lead        Lead         @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id])
+
+  @@index([leadId, createdAt])
+}
+
+model Client {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  company      String?
+  email        String?
+  phone        String?
+  notes        String?
+  sourceLeadId String   @unique @db.Uuid
+  sourceLead   Lead     @relation(fields: [sourceLeadId], references: [id])
+  convertedAt  DateTime @default(now())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([createdAt])
+}

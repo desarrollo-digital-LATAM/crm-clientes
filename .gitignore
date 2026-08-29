@@ -1,0 +1,11 @@
+node_modules/
+frontend/.next/
+frontend/out/
+backend/dist/
+*.tsbuildinfo
+*.log
+**/.env
+**/.env.local
+frontend/.env*
+!frontend/.env.example
+!backend/.env.example
