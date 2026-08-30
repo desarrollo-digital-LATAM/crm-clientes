@@ -1,23 +1,19 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import type { AuthenticatedRequest } from './auth.types';
-import { SupabaseAuthService } from './supabase-auth.service';
+import { SESSION_COOKIE_NAME } from './auth.constants';
 
 @Injectable()
-export class SupabaseAuthGuard implements CanActivate {
-  constructor(private readonly supabaseAuth: SupabaseAuthService, private readonly authService: AuthService) {}
+export class SessionAuthGuard implements CanActivate {
+  constructor(private readonly authService: AuthService) {}
 
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
-    const authorization = request.headers.authorization;
-    const [scheme, token] = authorization?.split(' ') ?? [];
+    const token = request.cookies?.[SESSION_COOKIE_NAME] as string | undefined;
 
-    if (scheme?.toLowerCase() !== 'bearer' || !token) {
-      throw new UnauthorizedException('Se requiere un Bearer token.');
-    }
+    if (!token) throw new UnauthorizedException('Se requiere una sesión válida.');
 
-    const authUser = await this.supabaseAuth.verifyAccessToken(token);
-    request.user = await this.authService.synchronizeUser(authUser);
+    request.user = await this.authService.authenticateSession(token);
     return true;
   }
 }

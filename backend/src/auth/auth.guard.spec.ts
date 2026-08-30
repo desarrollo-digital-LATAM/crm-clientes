@@ -1,32 +1,32 @@
 import { UnauthorizedException } from '@nestjs/common';
 import type { ExecutionContext } from '@nestjs/common';
+import { LeadsController } from '../leads/leads.controller';
 import { AuthService } from './auth.service';
-import { SupabaseAuthGuard } from './auth.guard';
-import { SupabaseAuthService } from './supabase-auth.service';
+import { SessionAuthGuard } from './auth.guard';
 
-describe('SupabaseAuthGuard', () => {
-  it('rejects requests without a bearer token', async () => {
-    const guard = new SupabaseAuthGuard(
-      {} as SupabaseAuthService,
-      {} as AuthService,
-    );
-    const request = { headers: {} };
+describe('SessionAuthGuard', () => {
+  it('rejects requests without the session cookie', async () => {
+    const guard = new SessionAuthGuard({} as AuthService);
+    const request = { cookies: {} };
     const context = { switchToHttp: () => ({ getRequest: () => request }) } as ExecutionContext;
 
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
-  it('validates the token and attaches the synchronized user', async () => {
-    const authUser = { id: 'auth-id', email: 'team@example.com', user_metadata: {} };
-    const localUser = { id: 'local-id', authUserId: 'auth-id', name: 'team', email: 'team@example.com', role: 'MEMBER' as const };
-    const supabaseAuth = { verifyAccessToken: jest.fn().mockResolvedValue(authUser) } as unknown as SupabaseAuthService;
-    const authService = { synchronizeUser: jest.fn().mockResolvedValue(localUser) } as unknown as AuthService;
-    const guard = new SupabaseAuthGuard(supabaseAuth, authService);
-    const request = { headers: { authorization: 'Bearer valid-token' } };
+  it('validates the cookie and attaches currentUser', async () => {
+    const user = { id: 'local-id', name: 'Ana', email: 'ana@example.com', role: 'MEMBER' as const };
+    const authService = { authenticateSession: jest.fn().mockResolvedValue(user) } as unknown as AuthService;
+    const guard = new SessionAuthGuard(authService);
+    const request = { cookies: { crm_session: 'valid-token' } };
     const context = { switchToHttp: () => ({ getRequest: () => request }) } as ExecutionContext;
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
-    expect(supabaseAuth.verifyAccessToken).toHaveBeenCalledWith('valid-token');
-    expect(request).toHaveProperty('user', localUser);
+    expect(authService.authenticateSession).toHaveBeenCalledWith('valid-token');
+    expect(request).toHaveProperty('user', user);
+  });
+
+  it('protects the Leads controller with the session guard', () => {
+    const guards = Reflect.getMetadata('__guards__', LeadsController) as unknown[];
+    expect(guards).toContain(SessionAuthGuard);
   });
 });

@@ -5,7 +5,6 @@ export type AuthenticatedUser = {
   name: string | null;
   email: string;
   role: 'ADMIN' | 'MEMBER';
-  authUserId: string;
 };
 
 export type AuthenticatedRequest = Request & { user: AuthenticatedUser };

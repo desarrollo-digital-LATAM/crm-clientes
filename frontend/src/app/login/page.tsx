@@ -1,8 +1,9 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createSupabaseBrowserClient } from '../../lib/supabase/browser';
+import { login } from '../../lib/api/auth';
+import { ApiError } from '../../lib/api/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,32 +12,24 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient();
-    void supabase.auth.getSession().then(({ data }) => {
-      if (data.session) router.replace('/dashboard');
-    });
-  }, [router]);
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (loading) return;
     setError(null);
     setLoading(true);
 
-    const { error: signInError } = await createSupabaseBrowserClient().auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
-
-    if (signInError) {
-      setError('Correo o contraseña incorrectos.');
+    try {
+      await login(email.trim(), password);
+      router.replace('/dashboard');
+      router.refresh();
+    } catch (loginError) {
+      if (loginError instanceof ApiError && loginError.status === 401) setError('Correo o contraseña incorrectos.');
+      else if (loginError instanceof ApiError && loginError.status === 429) setError('Demasiados intentos. Espera un minuto e intenta nuevamente.');
+      else if (loginError instanceof ApiError && loginError.status === 408) setError('El servidor tardó demasiado. Intenta nuevamente.');
+      else setError('No pudimos conectar con el servidor. Verifica tu conexión e intenta nuevamente.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    router.replace('/dashboard');
-    router.refresh();
   }
 
   return (

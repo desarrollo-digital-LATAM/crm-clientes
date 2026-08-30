@@ -9,17 +9,22 @@
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "test": "jest --passWithNoTests",
-    "prisma:validate": "prisma validate"
+    "prisma:validate": "prisma validate",
+    "user:set-password": "ts-node -r dotenv/config scripts/user-admin.ts set-password",
+    "user:create": "ts-node -r dotenv/config scripts/user-admin.ts create"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
+    "@nestjs/throttler": "^6.5.0",
     "@prisma/client": "^6.19.0",
-    "@supabase/supabase-js": "^2.57.0",
+    "argon2": "^0.45.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
+    "cookie-parser": "^1.4.7",
+    "dotenv": "^17.4.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2"
   },
@@ -28,6 +33,7 @@
     "@nestjs/cli": "^11.0.10",
     "@nestjs/schematics": "^11.0.7",
     "@nestjs/testing": "^11.1.6",
+    "@types/cookie-parser": "^1.4.10",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",

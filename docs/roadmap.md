@@ -27,48 +27,110 @@ Estado: completada.
 
 ## Fase 2 - Autenticación y usuarios
 
-Estado: bloqueada para verificación end-to-end hasta configurar las variables públicas de Supabase en `frontend/.env` y probar con usuarios internos reales.
+Estado: completada.
 
-- [x] Validar tokens de Supabase Auth en NestJS mediante `supabase.auth.getUser(token)`.
-- [x] Crear guard de autenticación y decorator de usuario actual.
-- [x] Sincronizar el usuario autenticado con `User` usando `upsert` por `authUserId`.
-- [ ] Aplicar roles `ADMIN` y `MEMBER` sin un sistema de permisos complejo.
-- [x] Crear login por email/contraseña y cierre de sesión en frontend.
-- [x] Proteger `/dashboard`, `/leads` y `/clientes` mediante `proxy.ts`.
+- [x] Autenticar email/password en NestJS con hash Argon2id y mensaje de error uniforme.
+- [x] Crear `SessionAuthGuard` y conservar el decorator de usuario actual.
+- [x] Persistir solo SHA-256 del token de sesión y enviarlo como cookie HttpOnly de siete días.
+- [x] Conservar roles `ADMIN` y `MEMBER` preparados, sin implementar RBAC complejo durante el MVP.
+- [x] Crear login y logout contra NestJS; logout revoca sesión y limpia cookie.
+- [x] Proteger `/dashboard`, `/leads` y `/clientes` mediante `/api/auth/me`, sin proxy ni Supabase Auth.
 - [x] Crear shell mínimo autenticado para `/dashboard`.
 - [x] Crear `GET /api/auth/me` con respuesta pública mínima.
-- [x] Añadir pruebas unitarias del guard y sincronización de usuarios.
+- [x] Añadir rate limit de 5 intentos/minuto/IP solo al login.
+- [x] Añadir CLI interactivo para contraseña inicial y creación de usuarios internos, sin signup público.
+- [x] Migrar el usuario existente preservando ID/datos/relaciones y eliminar `authUserId`.
+- [x] Añadir pruebas unitarias de login, sesión, guard, logout y protección de Leads.
 
-## Fase 3 - CRUD de leads
+Siguiente fase: Fase 3 - Backend/API de Leads.
 
-- [ ] Crear DTOs y endpoints REST autenticados para leads.
-- [ ] Validar nombre y al menos un medio de contacto.
-- [ ] Implementar búsqueda, filtro por estado, ordenación y paginación en API.
-- [ ] Implementar cambio de estado y registro de la actividad correspondiente.
-- [ ] Cubrir reglas principales con tests.
+## Fase 3 - Backend/API de Leads
 
-## Fase 4 - Interfaz principal de leads
+Estado: completada.
 
-- [ ] Crear layout privado con sidebar compacto y header.
-- [ ] Implementar tabla con TanStack Table.
-- [ ] Añadir búsqueda, filtros, badges de estado y acciones.
-- [ ] Añadir formulario autenticado para crear y editar leads.
-- [ ] Integrar TanStack Query y estados de carga/error/vacío.
+- [x] Crear DTOs y endpoints REST autenticados para leads.
+- [x] Validar nombre y al menos un medio de contacto.
+- [x] Implementar búsqueda, filtros, ordenación y paginación en API.
+- [x] Implementar detalle, actualización y eliminación segura de leads.
+- [x] Cubrir reglas principales con tests.
+
+## Fase 4 - CRM Shell + UI de Leads + Branding + Dark Mode
+
+Estado: completada.
+
+- [x] Crear layout privado con sidebar compacto, header y navegación responsive.
+- [x] Implementar tabla server-side con TanStack Table.
+- [x] Añadir búsqueda con debounce, filtros, badges de estado y acciones.
+- [x] Añadir formulario autenticado para crear y editar leads con React Hook Form y Zod.
+- [x] Integrar TanStack Query y estados de carga, error, vacío y feedback.
+- [x] Añadir temas Light, Dark y System con tokens CSS persistentes.
+- [x] Aplicar branding oficial de Desarrollo Digital Latam.
+- [x] Refinar la tabla de Leads con menú de acciones mediante Portal, overflow solo horizontal, filas/columnas legibles y paginación integrada.
+
+Siguiente fase: Fase 5 - Detalle del lead y actividades.
+
+## Fase 4.1 - Refinamiento UX/UI del CRM Shell
+
+Estado: completada.
+
+- [x] Añadir sidebar desktop expandido/colapsado con preferencia persistente y tooltips accesibles.
+- [x] Mantener el drawer móvil independiente del estado colapsado de escritorio.
+- [x] Mejorar jerarquía tipográfica, áreas de interacción y espaciado del shell, Leads y formulario lateral.
+- [x] Mantener compatibilidad visual con Light, Dark y System y preparar el componente Brand para el logo oficial.
+- [x] Documentar la visión futura de automatizaciones, integraciones y MCP/WebMCP sin implementarla.
+
+Visión futura: las automatizaciones, webhooks, integraciones externas, WhatsApp, email, tareas automáticas y agentes IA deberán pasar por NestJS como capa central de negocio. MCP/WebMCP solo expondrá herramientas controladas; ninguna integración escribirá directamente en PostgreSQL.
+
+## Fase 4.1.1 - Estabilidad runtime
+
+Estado: completada.
+
+- [x] Manejar indisponibilidad temporal de la API sin convertirla en una pantalla 500 ni confundirla con una sesión no autenticada.
+- [x] Sustituir `next-themes` por un provider propio compatible con React 19/Next.js 16, conservando Light, Dark, System y persistencia.
+- [x] Completar prueba runtime con backend disponible, detenido y reiniciado.
+
+La autenticación Supabase histórica fue sustituida por sesión local NestJS. La prueba runtime autenticada de navegador pasó con cookie persistente y logout revocado.
+
+## Fase 4.1.2 - Hotfix final de procesos y branding
+
+Estado: completada.
+
+- [x] Integrar el logo oficial local con `next/image` y eliminar el monograma provisional.
+- [x] Corregir alineación del branding expandido y centrarlo en sidebar colapsado.
+- [x] Mantener expand/collapse, persistencia, drawer móvil y compatibilidad Light/Dark/System.
+- [x] Añadir `npm run dev:clean` para liberar únicamente 3000/3001 de forma explícita.
+- [x] Eliminar el script inline que provocaba el warning de `script tag` y mantener el provider propio de temas.
+- [x] Verificar validaciones estáticas, builds, Prisma y runtime sin dejar procesos de esta ejecución.
 
 ## Fase 5 - Detalle del lead y actividades
 
-- [ ] Crear `/leads/[id]` con información principal y de contacto.
-- [ ] Mostrar historial cronológico de actividades.
-- [ ] Permitir registrar notas, llamadas, mensajes, reuniones y seguimientos.
-- [ ] Permitir editar próximo seguimiento y datos operativos.
+Estado: completada.
+
+- [x] Crear `/leads/[id]` con información principal, contacto, responsable y seguimiento.
+- [x] Mostrar timeline descendente de `LeadActivity` con estados vacíos y errores recuperables.
+- [x] Registrar notas, llamadas, WhatsApp, email, reuniones y seguimientos mediante `POST /api/leads/:id/activities`; `GET` lista recientes primero.
+- [x] Tomar el usuario autenticado desde `CurrentUser`; no aceptar `userId` del cliente. `CALL`, `WHATSAPP`, `EMAIL` y `MEETING` actualizan `lastContactAt`; `FOLLOW_UP` se considera actividad interna y no lo cambia automáticamente.
+- [x] Generar `STATUS_CHANGE` en la misma transacción del `PATCH` cuando el estado cambia, sin duplicarlo si permanece igual.
+- [x] Editar `nextFollowUpAt` reutilizando el formulario de lead e invalidar detalle, actividades y listado con TanStack Query.
+- [x] Evitar loading indefinido con timeout de sesión/API, reintentos finitos y estados explícitos de ID inválido, 404, error recuperable y actividades independientes.
+- [x] Eliminar Supabase Auth, proxy, Bearer y espera remota; usar sesión HttpOnly propia validada por NestJS/PostgreSQL.
+- [x] Evitar destello de contenido privado con una pantalla neutral mientras `/api/auth/me` valida la sesión.
+- [x] Validar con sesión real el login, `/dashboard`, `/leads` y la carga de `/leads/[id]` con tiempos finitos.
+- [x] Cerrar la validación funcional de actividades, cambios de estado y persistencia de seguimiento de FASE 5.
+
+Siguiente fase prevista: Fase 6 - Formulario público de interesados / Captación de Leads, después de completar la validación manual autenticada.
 
 ## Fase 6 - Formulario público
 
-- [ ] Crear `/contacto` con formulario profesional y responsive.
-- [ ] Exponer `POST /api/public/leads` sin autenticación.
-- [ ] Validar y normalizar payload; crear lead `NEW` con origen `WEBSITE`.
-- [ ] Añadir rate limiting y honeypot si aporta valor.
-- [ ] Mostrar confirmación y errores sin revelar información interna.
+Estado: completada.
+
+- [x] Crear `/contacto` con formulario profesional y responsive.
+- [x] Exponer `POST /api/public/leads` sin autenticación.
+- [x] Validar y normalizar payload; crear lead `NEW` con origen `WEBSITE`.
+- [x] Añadir rate limiting y honeypot si aporta valor.
+- [x] Mostrar confirmación y errores sin revelar información interna.
+
+Siguiente fase prevista: Fase 7 - Conversión a cliente.
 
 ## Fase 7 - Conversión a cliente
 

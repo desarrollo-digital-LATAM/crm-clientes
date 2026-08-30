@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthController } from './auth.controller';
-import { SupabaseAuthGuard } from './auth.guard';
+import { SessionAuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
-import { SupabaseAuthService } from './supabase-auth.service';
 
 @Module({
+  imports: [ThrottlerModule.forRoot([{ ttl: 60_000, limit: 5 }])],
   controllers: [AuthController],
-  providers: [AuthService, SupabaseAuthService, SupabaseAuthGuard],
+  providers: [AuthService, SessionAuthGuard],
+  exports: [AuthService, SessionAuthGuard],
 })
 export class AuthModule {}
