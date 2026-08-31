@@ -7,6 +7,7 @@
     },
     "backend": {
       "root": "backend",
+      "framework": "nestjs",
       "entrypoint": "src/main.ts"
     }
   },
@@ -14,14 +15,12 @@
     {
       "source": "/api/(.*)",
       "destination": {
-        "type": "service",
         "service": "backend"
       }
     },
     {
       "source": "/(.*)",
       "destination": {
-        "type": "service",
         "service": "frontend"
       }
     }
