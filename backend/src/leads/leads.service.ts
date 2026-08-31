@@ -6,6 +6,7 @@ import { CreateLeadDto, UpdateLeadDto } from './dto/lead.dto';
 import { CreatePublicLeadDto } from './dto/public-lead.dto';
 import { QueryLeadsDto } from './dto/query-leads.dto';
 import { CreateLeadActivityDto } from './dto/activity.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const assignedUserSelect = { id: true, name: true, email: true } as const;
 const leadInclude = { assignedUser: { select: assignedUserSelect }, client: { select: { id: true } } } as const;
@@ -14,7 +15,7 @@ const sortableFields = ['createdAt', 'updatedAt', 'name', 'nextFollowUpAt', 'sta
 
 @Injectable()
 export class LeadsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly notifications?: NotificationsService) {}
 
   async create(dto: CreateLeadDto, currentUser: AuthenticatedUser) {
     const assignedUserId = dto.assignedUserId ?? currentUser.id;
@@ -39,6 +40,7 @@ export class LeadsService {
       include: leadInclude,
     });
 
+    await this.notifySafely({ userId: assignedUserId, type: 'NEW_LEAD', title: 'Nuevo Lead recibido', message: `Se creó el Lead ${lead.name}.`, href: `/leads/${lead.id}`, dedupeKey: `NEW_LEAD:${lead.id}` });
     return this.serializeLead(lead);
   }
 
@@ -147,6 +149,12 @@ export class LeadsService {
         return updated;
       })
       : await this.prisma.lead.update({ where: { id }, data, include: leadInclude });
+    if (dto.assignedUserId && dto.assignedUserId !== current.assignedUserId) {
+      await this.notifySafely({ userId: dto.assignedUserId, type: 'LEAD_ASSIGNED', title: 'Te asignaron un Lead', message: `${lead.name} requiere tu atención.`, href: `/leads/${lead.id}`, dedupeKey: `LEAD_ASSIGNED:${lead.id}:${dto.assignedUserId}` });
+    }
+    if (nextStatus === LeadStatus.WON && current.status !== LeadStatus.WON && lead.assignedUserId) {
+      await this.notifySafely({ userId: lead.assignedUserId, type: 'LEAD_WON', title: 'Lead ganado', message: `${lead.name} pasó a estado Ganado.`, href: `/leads/${lead.id}`, dedupeKey: `LEAD_WON:${lead.id}` });
+    }
     return this.serializeLead(lead);
   }
 
@@ -203,6 +211,11 @@ export class LeadsService {
 
   private toDecimal(value: number | null | undefined) {
     return value === undefined || value === null ? value : new Prisma.Decimal(value);
+  }
+
+  private async notifySafely(input: Parameters<NotificationsService['create']>[0]) {
+    if (!this.notifications) return;
+    try { await this.notifications.create(input); } catch (error) { console.error('No se pudo crear una notificación interna.', error); }
   }
 
   private serializeLead(lead: Prisma.LeadGetPayload<{ include: typeof leadInclude }>) {

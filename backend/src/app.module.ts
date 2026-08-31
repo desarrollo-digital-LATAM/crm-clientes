@@ -9,8 +9,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { AutomationModule } from './automation/automation.module';
 import { UsersModule } from './users/users.module';
 import { RemindersModule } from './reminders/reminders.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, LeadsModule, PublicLeadsModule, ClientsModule, DashboardModule, AutomationModule, UsersModule, RemindersModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, LeadsModule, PublicLeadsModule, ClientsModule, DashboardModule, AutomationModule, UsersModule, RemindersModule, NotificationsModule],
 })
 export class AppModule {}

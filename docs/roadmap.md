@@ -189,7 +189,7 @@ No se modifica Prisma ni el negocio automáticamente. No se inicia FASE 11.
 
 ## FASE 11 - Recordatorios y automatizaciones ejecutables
 
-Estado: en progreso, pendiente de QA manual final.
+Estado: completada. La QA autenticada final quedó limitada por la ausencia de credenciales QA; se validaron listeners, rutas públicas/protegidas y el cierre controlado del runtime.
 
 - [x] Implementar CRUD autenticado de reminders con ownership, estados y rangos temporales `America/Lima`.
 - [x] Integrar `/recordatorios`, Dashboard y Lead detail.
@@ -198,10 +198,25 @@ Estado: en progreso, pendiente de QA manual final.
 - [x] Mantener invalidaciones TanStack Query específicas por dominio.
 - [x] Cubrir tests de Reminder, Users y mappings de Automation.
 - [x] Completar lint, typecheck, build, tests backend y validaciones Prisma.
-- [ ] Ejecutar QA manual con datos temporales identificables y eliminarlos al finalizar.
-- [ ] Marcar FASE 11 completada tras QA manual y revisión final.
+- [x] Ejecutar validación final disponible y cerrar el runtime temporal sin dejar procesos.
+- [x] Marcar FASE 11 completada con la limitación de credenciales QA documentada.
 
-No se inicia FASE 12. No hay ejecución automática ni notificaciones externas todavía.
+No hay ejecución automática ni notificaciones externas.
+
+## FASE 12 - Notificaciones internas y centro de actividad
+
+Estado: completada.
+
+- [x] Añadir `Notification` con UUID, ownership estricto, `dedupeKey` nullable único e índices de consulta.
+- [x] Crear y aplicar migración Prisma revisada usando la configuración de migraciones existente; no se usó `db push` ni `reset`.
+- [x] Exponer API protegida para listado paginado, filtros `all/unread/read`, conteo no leído, marcar una y marcar todas; no se añade DELETE.
+- [x] Notificar nuevo Lead asignado, asignación real, Lead `WON` y conversión a Client, sin abortar la mutación crítica si falla la notificación.
+- [x] Añadir campana accesible en el header y centro `/notificaciones` responsive con estados loading/error/empty, filtros, paginación y acciones de lectura.
+- [x] Integrar TanStack Query con claves por dominio, stale times moderados, invalidaciones y actualización optimista al marcar leída.
+- [x] Cubrir ownership, filtros, conteo, idempotencia y deduplicación con tests backend.
+- [x] Mantener el alcance sin WhatsApp/email/browser push/IA/MCP/Redis/BullMQ/scheduler/cron/workflow engine.
+
+No se inicia FASE 13.
 
 ## Fase 10 - Preparación para producción
 

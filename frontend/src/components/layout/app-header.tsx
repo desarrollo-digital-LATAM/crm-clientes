@@ -4,10 +4,11 @@ import { Menu } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { ThemeToggle } from '../theme/theme-toggle';
 import LogoutButton from '../../app/dashboard/logout-button';
+import { NotificationBell } from '../notifications/notification-bell';
 
 export function AppHeader({ user, onMenu }: { user: { name: string | null; email: string }; onMenu: () => void }) {
   const pathname = usePathname();
-  const title = pathname.startsWith('/leads') ? 'Leads' : pathname.startsWith('/clientes') ? 'Clientes' : 'Dashboard';
+  const title = pathname.startsWith('/leads') ? 'Leads' : pathname.startsWith('/clientes') ? 'Clientes' : pathname.startsWith('/notificaciones') ? 'Notificaciones' : 'Dashboard';
 
   return (
     <header className="flex min-h-[76px] items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-5 sm:px-10">
@@ -19,6 +20,7 @@ export function AppHeader({ user, onMenu }: { user: { name: string | null; email
         <p className="hidden text-sm text-[var(--muted-foreground)] sm:block">CRM Clientes · Gestión comercial</p>
       </div>
       <div className="ml-auto flex items-center gap-3 sm:gap-5">
+        <NotificationBell />
         <ThemeToggle />
         <div className="hidden text-right sm:block">
           <p className="max-w-48 truncate text-sm font-medium">{user.name || user.email}</p>

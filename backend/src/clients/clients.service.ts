@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { QueryClientsDto } from './dto/query-clients.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const sourceLeadSelect = { id: true, status: true, source: true, createdAt: true } as const;
 const clientInclude = { sourceLead: { select: sourceLeadSelect } } as const;
@@ -11,7 +12,7 @@ const sortableFields = ['convertedAt', 'createdAt', 'updatedAt', 'name'] as cons
 
 @Injectable()
 export class ClientsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly notifications?: NotificationsService) {}
 
   async findAll(query: QueryClientsDto) {
     const where: Prisma.ClientWhereInput = query.search ? {
@@ -47,13 +48,17 @@ export class ClientsService {
     if (lead.status !== LeadStatus.WON) throw new ConflictException('El lead debe estar en estado Ganado antes de convertirse en cliente.');
 
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const client = await this.prisma.$transaction(async (tx) => {
         const existing = await tx.client.findUnique({ where: { sourceLeadId: leadId } });
         if (existing) throw new ConflictException('Este lead ya fue convertido en cliente.');
         const client = await tx.client.create({ data: { name: lead.name, company: lead.company, email: lead.email, phone: lead.phone, notes: null, sourceLeadId: lead.id }, include: clientInclude });
         await tx.leadActivity.create({ data: { leadId, userId: currentUser.id, type: ActivityType.NOTE, description: 'Lead convertido en cliente.' } });
         return client;
       });
+      try {
+        if (this.notifications) await this.notifications.create({ userId: currentUser.id, type: 'CLIENT_CREATED', title: 'Cliente creado', message: `${client.name} ahora es cliente.`, href: `/clientes/${client.id}`, dedupeKey: `CLIENT_CREATED:${client.id}` });
+      } catch (error) { console.error('No se pudo crear una notificación interna.', error); }
+      return client;
     } catch (error) {
       if (error instanceof ConflictException) throw error;
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new ConflictException('Este lead ya fue convertido en cliente.');

@@ -76,7 +76,8 @@ Estados: `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL`, `NEGOTIATION`, `WON`, `LOS
 
 Fase 0, Fase 1, Fase 2, Fase 3, Fase 4, Fase 4.1, Fase 4.1.1, Fase 4.1.2, Fase 5, Fase 6, Fase 7 y FASE 8 completadas. La migración definitiva de autenticación local NestJS está completada y validada. La validación de infraestructura queda pendiente por conectividad de `DIRECT_URL` y stress test autenticado.
 
-FASE 11 está en cierre: reminders, `/recordatorios`, paneles de Dashboard y Lead detail, menciones `@`, usuarios activos y acciones ejecutables están implementados. Las invalidaciones son específicas por dominio; no hay ejecución automática ni notificaciones externas.
+FASE 11 está completada: reminders, `/recordatorios`, paneles de Dashboard y Lead detail, menciones `@`, usuarios activos y acciones ejecutables están implementados. La QA autenticada final quedó limitada por la ausencia de credenciales QA; las rutas públicas/protegidas y el cierre controlado del runtime fueron validados. Las invalidaciones son específicas por dominio; no hay ejecución automática ni notificaciones externas.
+FASE 12 está completada: se añadió `Notification` con ownership por usuario, `dedupeKey` único nullable, migración aplicada con Prisma, API protegida de listado/filtros/conteo/marcar leída y eventos internos para leads asignados, asignación real, WON y conversión a cliente. El centro `/notificaciones` y la campana del header usan TanStack Query, estados recuperables, paginación y controles accesibles. No hay DELETE, scheduler, cron, Redis, BullMQ ni notificaciones externas.
 
 ## Último trabajo realizado
 
