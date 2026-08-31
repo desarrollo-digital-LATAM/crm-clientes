@@ -48,7 +48,7 @@ Estados: `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL`, `NEGOTIATION`, `WON`, `LOS
 - `Client.sourceLeadId` es único y obligatorio: un lead puede originar como máximo un cliente.
 - Validación global de NestJS con transformación y whitelist.
 - `PrismaService` es global, extiende `PrismaClient`, conecta al iniciar el módulo y desconecta al destruirlo.
-- `DATABASE_URL` queda destinada a la conexión pooler y `DIRECT_URL` a migraciones directas; ambas deben ser proporcionadas por Supabase.
+- `DATABASE_URL` queda destinada al runtime mediante Transaction Pooler y `DIRECT_URL` a Prisma CLI/migraciones; ambas deben ser proporcionadas por Supabase.
 - Supabase se usa exclusivamente como hosting PostgreSQL mediante `DATABASE_URL` y `DIRECT_URL`; Supabase Auth fue eliminado del CRM.
 - NestJS verifica email y hash Argon2id, genera 32 bytes aleatorios por sesión y guarda únicamente su hash SHA-256.
 - La cookie `crm_session` es HttpOnly, SameSite=Lax, Path=/, dura siete días y usa Secure en producción. CORS acepta el origen configurado y credenciales, nunca `*`.
@@ -57,7 +57,7 @@ Estados: `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL`, `NEGOTIATION`, `WON`, `LOS
 - Login usa un mensaje uniforme para email inexistente/password incorrecta/inactivo y un rate limit local de 5 intentos por minuto/IP.
 - La primera migración debe ejecutarse contra la base real; no se ejecutaron operaciones destructivas ni `prisma db push`.
 - El script raíz `npm run dev` conserva el arranque simultáneo de backend y frontend.
-- `npm run dev` inicia normalmente sin matar procesos; `npm run dev:clean` ejecuta `kill-port 3000 3001` y luego inicia el stack. La limpieza solo afecta procesos que escuchan esos puertos del proyecto.
+- `npm run dev` inicia normalmente sin matar procesos; `npm run dev:clean` ejecuta `scripts/dev-clean.js`, que libera únicamente procesos que escuchan 3000/3001, espera a que ambos puertos estén disponibles y luego inicia el stack.
 - Regla operativa para agentes: todo servidor dev iniciado para pruebas debe detenerse correctamente al finalizar; no usar `taskkill /IM node.exe /F`.
 - La API de Leads no accede directamente a la Data API de Supabase: el flujo es Next.js -> NestJS -> Prisma -> PostgreSQL.
 - La identidad visual usa el logo oficial local `frontend/public/Logo DesarrolloDigitalLatam.jpeg`, servido como `/Logo DesarrolloDigitalLatam.jpeg` mediante `next/image`.
@@ -74,7 +74,9 @@ Estados: `NEW`, `CONTACTED`, `QUALIFIED`, `PROPOSAL`, `NEGOTIATION`, `WON`, `LOS
 
 ## Estado actual
 
-Fase 0, Fase 1, Fase 2, Fase 3, Fase 4, Fase 4.1, Fase 4.1.1, Fase 4.1.2, Fase 5 y Fase 6 completadas. La migración definitiva de autenticación local NestJS está completada y validada. El desarrollo funcional está detenido y FASE 7 no se ha iniciado.
+Fase 0, Fase 1, Fase 2, Fase 3, Fase 4, Fase 4.1, Fase 4.1.1, Fase 4.1.2, Fase 5, Fase 6, Fase 7 y FASE 8 completadas. La migración definitiva de autenticación local NestJS está completada y validada. La validación de infraestructura queda pendiente por conectividad de `DIRECT_URL` y stress test autenticado.
+
+FASE 11 está en cierre: reminders, `/recordatorios`, paneles de Dashboard y Lead detail, menciones `@`, usuarios activos y acciones ejecutables están implementados. Las invalidaciones son específicas por dominio; no hay ejecución automática ni notificaciones externas.
 
 ## Último trabajo realizado
 
@@ -108,7 +110,6 @@ Refinamiento App Shell (post-Fase 5):
 - Sidebar desktop: `h-dvh` con `flex-col`, navegación arriba, usuario anclado abajo con `mt-auto`.
 - Header: `flex-shrink-0` fuera del contenedor scrollable, permanece visible.
 - Main content: `flex-1 min-h-0 overflow-y-auto` única zona con scroll vertical.
-- Body: clase `crm-shell-active` añade `overflow: hidden` solo en rutas autenticadas; `/login` y páginas públicas sin afectar.
 - Mobile drawer preservado sin cambios.
 - Validado en 1920x1080 y 1366x768: sidebar/usuario/header fijos, main scrollea, sin scrollbars anidados, dropdown Lead sigue funcionando, estado collapsed persiste.
 - Archivos modificados: `frontend/src/components/layout/app-shell.tsx`, `frontend/src/components/layout/app-sidebar.tsx`, `frontend/src/app/globals.css`.
@@ -133,15 +134,36 @@ FASE 6 - Formulario público de interesados / Captación de Leads:
 - Archivos nuevos: `backend/src/leads/dto/public-lead.dto.ts`, `backend/src/leads/public-leads.controller.ts`, `backend/src/leads/public-leads.module.ts`, `frontend/src/lib/public-lead-validation.ts`, `frontend/src/components/public/public-lead-form.tsx`, `frontend/src/app/(public)/contacto/page.tsx`, `frontend/src/app/(public)/layout.tsx`.
 - Archivos modificados: `backend/src/leads/leads.service.ts`, `backend/src/app.module.ts`, `frontend/src/lib/api/leads.ts`, `frontend/src/components/leads/lead-table.tsx`.
 
+FASE 7 - Clientes y conversión Lead → Client:
+- `Client` ya soportaba el modelo requerido; no se modificó `schema.prisma` ni se creó migración. `sourceLeadId` sigue siendo único y obligatorio.
+- `POST /api/leads/:id/convert` exige sesión y estado `WON`; crea Client con datos principales del Lead, `notes = null` y `convertedAt` generado por backend.
+- La conversión conserva Lead y actividades, registra `NOTE` `Lead convertido en cliente.` y convierte duplicados/concurrencia (`P2002`) en `409`.
+- Clientes expone `GET /api/clients`, `GET /api/clients/:id` y `PATCH /api/clients/:id`, con paginación, búsqueda, orden por `convertedAt` y edición limitada a datos de contacto/notas. No hay creación manual ni DELETE.
+- `/clientes` incluye listado y búsqueda; `/clientes/[id]` incluye detalle, edición y enlace al Lead origen. `/leads/[id]` muestra conversión solo para `WON`, confirmación y enlace al cliente ya creado.
+- Validación manual real completada con registros temporales `QA Fase 7`: conversión, datos copiados, edición persistente, búsqueda por nombre/empresa/email/teléfono, Lead y Activities conservados, negativos `409/404/401` y concurrencia `201/409`. Los registros temporales fueron eliminados tras la prueba.
+
 ## Próximo paso
 
-Desarrollo funcional pausado por decisión del equipo. No iniciar FASE 7. FASE 6 completada y validada funcionalmente.
+FASE 8 completada y validada. `GET /api/dashboard/summary` consolida métricas con `count`, `groupBy` y consultas limitadas en paralelo; `/dashboard` consume una respuesta con pipeline, seguimientos, agrupaciones y actividad reciente. Conversión = `Client.count / Lead.count * 100`; seguimientos excluyen `WON`/`LOST` y “hoy” usa `America/Lima`. No se modificó Prisma.
+
+Refinamiento técnico de FASE 8: el resumen se ejecuta en dos grupos de consultas para no abrir once operaciones Prisma simultáneas. Totales/estado/origen/servicio se resuelven primero; los seguimientos se leen una sola vez para derivar vencidos, hoy y próximos en memoria, junto con actividad y lista limitada. Se conserva `staleTime` frontend de 45 segundos, sin retry infinito ni segundo cliente Prisma.
+
+Conexiones Prisma/Supabase: runtime estable con `DATABASE_URL` en Transaction Pooler de Supavisor `:6543`, `pgbouncer=true`, `connection_limit=5` y `pool_timeout=10`. `DIRECT_URL` para Prisma CLI/migraciones usa `db.<project>.supabase.co:5432`, una conexión directa; en esta red falla con `P1001`, probablemente por conectividad IPv6. Debe reemplazarse por Session Pooler IPv4 `:5432` únicamente si se confirma que la red no soporta IPv6. No se cambia `DATABASE_URL`, el esquema ni el límite de Supabase.
+
+Siguiente paso previsto: FASE 9 — Pipeline visual / Kanban de Leads. No iniciar en esta ejecución.
+
+FASE 9 implementa selector Tabla/Pipeline persistido en `localStorage`, endpoint protegido `GET /api/leads/pipeline` con una consulta limitada a 1000 leads y agrupación por los siete estados reales. El Kanban conserva búsqueda/origen/servicio, permite drag/drop con actualización optimista y rollback, y usa el `PATCH /api/leads/:id` existente para registrar un único `STATUS_CHANGE`; mover dentro de la misma columna no ejecuta cambios. `WON` no convierte automáticamente a Client y `LOST` conserva el Lead. No se persiste orden manual.
+
+FASE 9.1 refina el Design System visual sin modificar funcionalidad: sidebar colapsado de 80px y expandido de 248px, superficies `background`/`surface`/`surface-elevated`, bordes sutiles, Kanban de 312px por columna, scrollbar horizontal discreto, targets accesibles y soporte de movimiento reducido.
+
+FASE 10 añade automatizaciones comerciales base calculadas dinámicamente por `GET /api/automation/recommendations`, protegido por sesión y resuelto con una única consulta Prisma de selección mínima. Las recomendaciones cubren seguimiento inicial/siguiente, seguimientos vencidos, contacto estancado, leads sin responsable y leads ganados pendientes de convertir; se ordenan por prioridad y fecha relevante. Dashboard y detalle de Lead las representan sin ejecutar cambios automáticamente, con cache e invalidaciones específicas. No se modificó Prisma, no hay jobs/cron ni integraciones externas, y FASE 11 no se inicia.
 
 ## Problemas conocidos
 
 - Migraciones existentes: esquema inicial y dos migraciones de auth local (`local_auth_sessions` y `require_user_password`).
-- `npx prisma migrate status` confirma: 3 migraciones encontradas y esquema de base de datos actualizado.
-- La conexión usa `DATABASE_URL` para el pooler de Supabase y `DIRECT_URL` para operaciones directas/migraciones.
+- `npx prisma migrate status` queda pendiente de conectividad: con `DIRECT_URL` devuelve `P1001` al intentar alcanzar `db.<project>.supabase.co:5432`.
+- La conexión runtime usa `DATABASE_URL` con Transaction Pooler `:6543`; `DIRECT_URL` usa conexión directa `:5432` para Prisma CLI/migraciones.
+- Validación de infraestructura pendiente: conectividad de `DIRECT_URL` y stress test autenticado, para el que todavía no hay credenciales QA. Esto no bloquea la funcionalidad runtime de FASE 8.
 - El frontend solo requiere `NEXT_PUBLIC_API_URL`. Las variables públicas de Supabase Auth se retiraron de código y `.env.example`; `DATABASE_URL`/`DIRECT_URL` se mantienen porque PostgreSQL continúa en Supabase.
 - El antiguo loop SSR dejó de ser aplicable: no existe cliente Supabase ni `proxy.ts`; la única autoridad de sesión es NestJS mediante `/api/auth/me`.
 - La migración conservó `User.id`, nombre, email, rol y relaciones del usuario existente; eliminó únicamente `authUserId`. La contraseña inicial se estableció por CLI antes de hacer `passwordHash` obligatorio.
@@ -164,8 +186,8 @@ Desarrollo funcional pausado por decisión del equipo. No iniciar FASE 7. FASE 6
 ## Comandos importantes
 
 - `npm run install:all`: instala dependencias de ambas aplicaciones.
-- `npm run dev`: inicia backend y frontend simultáneamente.
-- `npm run dev:clean`: libera voluntariamente 3000/3001 y luego inicia backend y frontend.
+- `npm run dev`: inicia backend y frontend simultáneamente con `concurrently`, finalizando el proceso hermano si uno falla y propagando la terminación.
+- `npm run dev:clean`: libera únicamente los procesos que escuchan 3000/3001, espera a que ambos puertos estén realmente disponibles y luego inicia el stack multiplataforma.
 - `npm run typecheck`: comprueba TypeScript en ambas aplicaciones.
 - `npm run build`: construye backend y frontend.
 - `npm run lint --prefix frontend`: ejecuta lint del frontend.

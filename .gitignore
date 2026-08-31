@@ -1,11 +1,80 @@
+# Dependencies
 node_modules/
-frontend/.next/
-frontend/out/
-backend/dist/
-*.tsbuildinfo
-*.log
+**/node_modules/
+
+# Environment files and secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
 **/.env
 **/.env.local
-frontend/.env*
-!frontend/.env.example
-!backend/.env.example
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+**/.env.*.local
+!.env.example
+!**/.env.example
+
+# Build output and framework metadata
+.next/
+**/.next/
+out/
+**/out/
+dist/
+**/dist/
+.turbo/
+**/.turbo/
+.vercel/
+**/.vercel/
+
+# Coverage, test reports, and caches
+coverage/
+**/coverage/
+playwright-report/
+**/playwright-report/
+test-results/
+**/test-results/
+.nyc_output/
+**/.nyc_output/
+.cache/
+**/.cache/
+.eslintcache
+**/.eslintcache
+*.tsbuildinfo
+
+# Logs and runtime artifacts
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.pid
+*.pid.lock
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editors and temporary files
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# Private certificate and key material
+*.pem
+*.key
+*.crt
+
+# Windows device-name artifacts
+NUL
+**/NUL
+.agents

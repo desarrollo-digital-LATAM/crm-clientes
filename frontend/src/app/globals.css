@@ -1,15 +1,17 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 :root {
   --background: #f4f7fb;
   --foreground: #10213f;
   --surface: #ffffff;
   --surface-secondary: #eef3f9;
+  --surface-elevated: #ffffff;
   --card: #ffffff;
   --card-foreground: #10213f;
   --muted: #e8eef6;
   --muted-foreground: #64748b;
-  --border: #d9e2ee;
+  --border: #dfe7f0;
+  --border-subtle: #e7edf4;
   --primary: #1677ff;
   --primary-hover: #075fda;
   --primary-foreground: #ffffff;
@@ -27,11 +29,13 @@
   --foreground: #e7eef9;
   --surface: #111f36;
   --surface-secondary: #172842;
+  --surface-elevated: #192d49;
   --card: #13233c;
   --card-foreground: #e7eef9;
   --muted: #20334f;
   --muted-foreground: #9aaec8;
-  --border: #2a3d5a;
+  --border: #263953;
+  --border-subtle: #1d304b;
   --primary: #4b9aff;
   --primary-hover: #78b5ff;
   --primary-foreground: #071426;
@@ -57,18 +61,54 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
   min-height: 100%;
 }
 
-button, input, select, textarea { font: inherit; }
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
 
-button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible, a:focus-visible {
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
-/* Prevent body scrollbar when authenticated shell controls viewport */
-.crm-shell-active body {
-  overflow: hidden;
-  height: 100%;
+.crm-scrollbar {
+  scrollbar-color: var(--muted) transparent;
+  scrollbar-width: thin;
+}
+
+.crm-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+.crm-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.crm-scrollbar::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+  background-color: var(--muted);
+}
+.crm-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

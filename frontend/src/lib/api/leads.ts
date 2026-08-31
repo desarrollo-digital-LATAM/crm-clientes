@@ -1,16 +1,18 @@
 import { apiRequest } from './client';
-import type { Lead, LeadActivity, LeadPayload, LeadsResponse, LeadStatus, ActivityType } from '../../types/leads';
+import type { Lead, LeadActivity, LeadPayload, LeadsResponse, LeadStatus, ActivityType, PipelineResponse } from '../../types/leads';
 
-export const leadKeys = { all: ['leads'] as const, detail: (id: string) => ['leads', id] as const, activities: (id: string) => ['leads', id, 'activities'] as const };
+export const leadKeys = { all: ['leads'] as const, detail: (id: string) => ['leads', id] as const, activities: (id: string) => ['leads', id, 'activities'] as const, pipeline: (query?: Pick<LeadQuery, 'search' | 'source' | 'serviceInterest'>) => ['leads', 'pipeline', query] as const };
 
 export type LeadQuery = { page: number; limit: number; search?: string; status?: LeadStatus; source?: string; serviceInterest?: string; assignedUserId?: string };
 export function fetchLeads(query: LeadQuery) { const params = new URLSearchParams({ page: String(query.page), limit: String(query.limit), sortBy: 'createdAt', sortOrder: 'desc' }); Object.entries(query).forEach(([key, value]) => { if (value && !['page', 'limit'].includes(key)) params.set(key, String(value)); }); return apiRequest<LeadsResponse>(`/leads?${params}`); }
+export function fetchPipeline(query: Pick<LeadQuery, 'search' | 'source' | 'serviceInterest'>) { const params = new URLSearchParams(); Object.entries(query).forEach(([key, value]) => { if (value) params.set(key, value); }); return apiRequest<PipelineResponse>(`/leads/pipeline?${params}`); }
 export function createLead(payload: LeadPayload) { return apiRequest<Lead>('/leads', { method: 'POST', body: JSON.stringify(payload) }); }
 export function updateLead(id: string, payload: Partial<LeadPayload>) { return apiRequest<Lead>(`/leads/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }); }
 export function deleteLead(id: string) { return apiRequest<{ success: boolean }>(`/leads/${id}`, { method: 'DELETE' }); }
 export function fetchLead(id: string) { return apiRequest<Lead>(`/leads/${id}`); }
 export function fetchLeadActivities(id: string) { return apiRequest<{ data: LeadActivity[] }>(`/leads/${id}/activities`); }
 export function createLeadActivity(id: string, payload: { type: ActivityType; description: string }) { return apiRequest<LeadActivity>(`/leads/${id}/activities`, { method: 'POST', body: JSON.stringify(payload) }); }
+export function convertLead(id: string) { return apiRequest<import('../../types/clients').Client>(`/leads/${id}/convert`, { method: 'POST' }); }
 
 export type PublicLeadPayload = {
   name: string;

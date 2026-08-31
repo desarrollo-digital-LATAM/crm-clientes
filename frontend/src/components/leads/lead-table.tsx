@@ -110,7 +110,7 @@ export function LeadTable({ leads, page, totalPages, total, onPage, onEdit, onSt
   const table = useReactTable({ data: leads, columns, getCoreRowModel: getCoreRowModel(), manualPagination: true });
 
   return (
-    <div className="border border-[var(--border)] bg-[var(--surface)]">
+    <div className="overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)]">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[1360px] table-fixed text-left text-sm">
           <thead className="border-b border-[var(--border)] bg-[var(--surface-secondary)] text-xs uppercase tracking-wide text-[var(--muted-foreground)]">
@@ -152,7 +152,7 @@ function RowActions({ lead, onEdit, onDelete }: { lead: Lead; onEdit: (lead: Lea
         <button type="button" className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[var(--muted-foreground)] transition-colors hover:bg-[var(--muted)] hover:text-[var(--foreground)] data-[state=open]:bg-[var(--muted)] data-[state=open]:text-[var(--foreground)]" aria-label="Acciones del lead"><MoreHorizontal size={18} /></button>
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
-        <DropdownMenu.Content side="bottom" align="end" sideOffset={6} collisionPadding={8} className="z-50 w-44 rounded-lg border border-[var(--border)] bg-[var(--surface)] p-1 text-[var(--foreground)] shadow-md">
+        <DropdownMenu.Content side="bottom" align="end" sideOffset={6} collisionPadding={8} className="z-50 w-44 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1 text-[var(--foreground)] shadow-md">
           <DropdownMenu.Item asChild className={itemClass}>
             <Link href={`/leads/${lead.id}`}><Eye size={15} />Ver detalle</Link>
           </DropdownMenu.Item>

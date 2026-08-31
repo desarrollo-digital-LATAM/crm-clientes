@@ -1,26 +1,33 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, useSyncExternalStore } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 export type Theme = 'light' | 'dark' | 'system';
 type ThemeContextValue = { theme: Theme; setTheme: (theme: Theme) => void };
 const ThemeContext = createContext<ThemeContextValue>({ theme: 'system', setTheme: () => {} });
 
+function getStoredTheme(): Theme {
+  if (typeof window === 'undefined') return 'system';
+  const stored = window.localStorage.getItem('theme');
+  return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
+}
+
+function subscribeTheme(callback: () => void) {
+  window.addEventListener('crm-theme-change', callback);
+  return () => window.removeEventListener('crm-theme-change', callback);
+}
+
 export function useTheme() { return useContext(ThemeContext); }
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
-  const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof window === 'undefined') return 'system';
-    const stored = window.localStorage.getItem('theme');
-    return stored === 'light' || stored === 'dark' || stored === 'system' ? stored : 'system';
-  });
+  const theme = useSyncExternalStore(subscribeTheme, getStoredTheme, (): Theme => 'system');
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)');
-    const applyTheme = (selected: Theme) => {
-      const dark = selected === 'dark' || (selected === 'system' && media.matches);
+    const applyTheme = (value: Theme) => {
+      const dark = value === 'dark' || (value === 'system' && media.matches);
       document.documentElement.classList.toggle('dark', dark);
       document.documentElement.style.colorScheme = dark ? 'dark' : 'light';
     };
@@ -32,7 +39,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   function changeTheme(nextTheme: Theme) {
     window.localStorage.setItem('theme', nextTheme);
-    setTheme(nextTheme);
+    window.dispatchEvent(new Event('crm-theme-change'));
   }
 
   return <ThemeContext.Provider value={{ theme, setTheme: changeTheme }}><QueryClientProvider client={queryClient}>{children}</QueryClientProvider></ThemeContext.Provider>;

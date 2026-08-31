@@ -134,23 +134,74 @@ Siguiente fase prevista: Fase 7 - Conversión a cliente.
 
 ## Fase 7 - Conversión a cliente
 
-- [ ] Implementar `POST /api/leads/:id/convert` para leads `WON`.
-- [ ] Garantizar conversión idempotente y relación 1:1 mediante `sourceLeadId`.
-- [ ] Crear listado y detalle de clientes.
-- [ ] Permitir editar los datos iniciales del cliente.
+Estado: completada.
+
+- [x] Implementar `POST /api/leads/:id/convert` protegido para leads `WON`.
+- [x] Garantizar conversión única mediante `Client.sourceLeadId` y convertir conflictos `P2002` en `409`.
+- [x] Crear `GET /api/clients`, `GET /api/clients/:id` y `PATCH /api/clients/:id`; no se implementan POST ni DELETE manuales.
+- [x] Crear listado paginado/buscable, detalle y edición de clientes.
+- [x] Integrar conversión confirmada desde detalle de Lead y enlace al Lead origen.
+- [x] Registrar una actividad `NOTE` automática sin modificar el enum de actividades.
+- [x] Validar en runtime contra PostgreSQL la conversión, persistencia, edición, búsquedas, reglas negativas y concurrencia con datos QA temporales.
+
+FASE 8: completada funcionalmente. La validación de infraestructura queda pendiente por la conectividad de `DIRECT_URL` y el stress test autenticado.
 
 ## Fase 8 - Dashboard
 
-- [ ] Implementar resumen de leads, seguimientos, ganados, perdidos y clientes.
-- [ ] Priorizar indicadores accionables sobre gráficos decorativos.
-- [ ] Integrar el resumen en `/dashboard`.
+Estado: completada.
 
-## Fase 9 - UX, responsive, seguridad y pruebas
+- [x] Implementar `GET /api/dashboard/summary` protegido por sesión con agregaciones Prisma paralelas.
+- [x] Mostrar métricas reales, pipeline, agrupaciones, actividad reciente y próximos seguimientos.
+- [x] Integrar `/dashboard` con loading, error recuperable, vacío y enlaces operativos.
+- [x] Validar tests y builds sin modificar Prisma.
 
-- [ ] Revisar responsive en móvil y escritorio.
-- [ ] Revisar accesibilidad, estados vacíos y mensajes de error.
-- [ ] Reforzar rate limiting, CORS, validación y logging.
-- [ ] Añadir pruebas unitarias y de integración de flujos críticos.
+Definición: conversión = `Client.count / Lead.count * 100`, con 0% cuando no existen leads. Los seguimientos excluyen `WON` y `LOST`; “hoy” usa `America/Lima` y próximos son posteriores al día local. Orígenes y servicios se agrupan en backend y la UI limita la presentación a cinco elementos.
+
+Siguiente fase prevista: Fase 9 - Pipeline visual / Kanban de Leads.
+
+## Fase 9 - Pipeline visual / Kanban de Leads
+
+Estado: completada.
+
+- [x] Conservar Tabla y añadir selector Tabla/Pipeline persistido en `localStorage`.
+- [x] Añadir `GET /api/leads/pipeline` protegido, con una consulta `findMany`, selección mínima, límite de 1000 y agrupación por estado.
+- [x] Implementar Kanban responsive horizontal con los siete estados reales, tarjetas de seguimiento y responsable.
+- [x] Implementar drag/drop con `@dnd-kit/core`, `PATCH` existente, actualización optimista y rollback ante error.
+- [x] Mantener filtros de búsqueda, origen y servicio compartidos entre Tabla y Pipeline.
+- [x] Mantener `STATUS_CHANGE` transaccional; no cambiar el estado al arrastrar dentro de la misma columna.
+- [x] Mantener `WON` sin conversión automática a Client y `LOST` sin borrar el Lead.
+- [x] Añadir tests de agrupación, selección y límite del pipeline; validaciones estáticas completadas.
+
+No se persiste orden manual ni se inicia FASE 11.
+
+## Fase 10 - Automatizaciones comerciales base
+
+- [x] Añadir endpoint protegido `GET /api/automation/recommendations` con cálculo dinámico en una consulta.
+- [x] Implementar recomendaciones de seguimiento, contacto estancado, asignación y conversión pendiente.
+- [x] Integrar acciones sugeridas en Dashboard y recomendaciones contextuales en Lead detail.
+- [x] Añadir cache TanStack Query e invalidaciones específicas tras mutaciones relevantes.
+- [x] Cubrir reglas, prioridades, exclusiones, consulta única y protección de sesión con tests.
+- [x] Mantener recomendaciones no ejecutables, sin jobs, cron ni integraciones externas.
+
+Estado: completada.
+
+No se modifica Prisma ni el negocio automáticamente. No se inicia FASE 11.
+
+## FASE 11 - Recordatorios y automatizaciones ejecutables
+
+Estado: en progreso, pendiente de QA manual final.
+
+- [x] Implementar CRUD autenticado de reminders con ownership, estados y rangos temporales `America/Lima`.
+- [x] Integrar `/recordatorios`, Dashboard y Lead detail.
+- [x] Añadir usuarios activos mínimos para asignación.
+- [x] Conectar CTAs `SCHEDULE_FOLLOW_UP`, `RESCHEDULE_FOLLOW_UP`, `ASSIGN_OWNER` y `CONVERT_CLIENT` en Dashboard y Lead detail.
+- [x] Mantener invalidaciones TanStack Query específicas por dominio.
+- [x] Cubrir tests de Reminder, Users y mappings de Automation.
+- [x] Completar lint, typecheck, build, tests backend y validaciones Prisma.
+- [ ] Ejecutar QA manual con datos temporales identificables y eliminarlos al finalizar.
+- [ ] Marcar FASE 11 completada tras QA manual y revisión final.
+
+No se inicia FASE 12. No hay ejecución automática ni notificaciones externas todavía.
 
 ## Fase 10 - Preparación para producción
 

@@ -8,7 +8,8 @@ import { QueryLeadsDto } from './dto/query-leads.dto';
 import { CreateLeadActivityDto } from './dto/activity.dto';
 
 const assignedUserSelect = { id: true, name: true, email: true } as const;
-const leadInclude = { assignedUser: { select: assignedUserSelect } } as const;
+const leadInclude = { assignedUser: { select: assignedUserSelect }, client: { select: { id: true } } } as const;
+const pipelineSelect = { id: true, name: true, company: true, serviceInterest: true, status: true, nextFollowUpAt: true, createdAt: true, assignedUser: { select: assignedUserSelect } } as const;
 const sortableFields = ['createdAt', 'updatedAt', 'name', 'nextFollowUpAt', 'status'] as const;
 
 @Injectable()
@@ -85,6 +86,21 @@ export class LeadsService {
       data: leads.map((lead) => this.serializeLead(lead)),
       pagination: { page: query.page, limit: query.limit, total, totalPages: Math.ceil(total / query.limit) },
     };
+  }
+
+  async findPipeline(query: Pick<QueryLeadsDto, 'search' | 'source' | 'serviceInterest'>) {
+    const where: Prisma.LeadWhereInput = {
+      source: query.source ? { equals: query.source, mode: 'insensitive' } : undefined,
+      serviceInterest: query.serviceInterest ? { contains: query.serviceInterest, mode: 'insensitive' } : undefined,
+      ...(query.search ? { OR: ['name', 'company', 'email', 'phone'].map((field) => ({ [field]: { contains: query.search, mode: 'insensitive' } })) } : {}),
+    };
+    const leads = await this.prisma.lead.findMany({
+      where,
+      select: pipelineSelect,
+      orderBy: [{ nextFollowUpAt: { sort: 'asc', nulls: 'last' } }, { createdAt: 'desc' }],
+      take: 1000,
+    });
+    return Object.fromEntries(Object.values(LeadStatus).map((status) => [status, leads.filter((lead) => lead.status === status)]));
   }
 
   async findOne(id: string) {

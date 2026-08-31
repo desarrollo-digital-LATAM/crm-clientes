@@ -10,8 +10,6 @@ import { fetchCurrentUser } from '../../lib/api/auth';
 import { ApiError } from '../../lib/api/client';
 
 const anonymousDisplayUser = { name: null, email: 'Usuario' };
-const SHELL_CLASS = 'crm-shell-active';
-
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -27,11 +25,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const user = profileQuery.data ?? anonymousDisplayUser;
   const unauthorized = profileQuery.error instanceof ApiError && profileQuery.error.status === 401;
   const forbidden = profileQuery.error instanceof ApiError && profileQuery.error.status === 403;
-
-  useEffect(() => {
-    document.body.classList.add(SHELL_CLASS);
-    return () => document.body.classList.remove(SHELL_CLASS);
-  }, []);
 
   useEffect(() => {
     if (!(profileQuery.error instanceof ApiError) || profileQuery.error.status !== 401 || rejectingSession.current) return;
@@ -50,6 +43,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [mobileOpen]);
 
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'b' && !isEditingTarget(event.target)) {
+        event.preventDefault();
+        toggleSidebar();
+      }
+    }
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+  });
+
   function toggleSidebar() {
     localStorage.setItem('crm-sidebar-collapsed', String(!collapsed));
     window.dispatchEvent(new Event('crm-sidebar-change'));
@@ -61,7 +65,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex h-dvh overflow-hidden bg-[var(--background)]">
-      <div className={`hidden shrink-0 transition-[width] duration-200 lg:block ${collapsed ? 'w-[72px]' : 'w-[248px]'}`}>
+      <div className={`relative z-30 hidden shrink-0 overflow-visible transition-[width] duration-200 lg:block ${collapsed ? 'w-[80px]' : 'w-[248px]'}`}>
         <AppSidebar collapsed={collapsed} onToggle={toggleSidebar} user={user} />
       </div>
       {mobileOpen && (
@@ -112,4 +116,8 @@ function subscribeSidebar(callback: () => void) {
 
 function getSidebarCollapsed() {
   return window.localStorage.getItem('crm-sidebar-collapsed') === 'true';
+}
+
+function isEditingTarget(target: EventTarget | null) {
+  return target instanceof HTMLElement && (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable);
 }

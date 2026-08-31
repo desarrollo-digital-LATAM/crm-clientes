@@ -4,8 +4,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { LeadsModule } from './leads/leads.module';
 import { PublicLeadsModule } from './leads/public-leads.module';
+import { ClientsModule } from './clients/clients.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { AutomationModule } from './automation/automation.module';
+import { UsersModule } from './users/users.module';
+import { RemindersModule } from './reminders/reminders.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, LeadsModule, PublicLeadsModule],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), PrismaModule, AuthModule, LeadsModule, PublicLeadsModule, ClientsModule, DashboardModule, AutomationModule, UsersModule, RemindersModule],
 })
 export class AppModule {}

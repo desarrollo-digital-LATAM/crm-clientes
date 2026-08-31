@@ -1,3 +1,6 @@
-node_modules/
-.env
-
+# Frontend-specific build output
+.next/
+out/
+dist/
+.turbo/
+.vercel/

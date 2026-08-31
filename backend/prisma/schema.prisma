@@ -43,6 +43,7 @@ model User {
   leads      Lead[]         @relation("LeadAssignee")
   activities LeadActivity[]
   sessions   Session[]
+  reminders  Reminder[]
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 }
@@ -77,6 +78,7 @@ model Lead {
   assignedUser    User?          @relation("LeadAssignee", fields: [assignedUserId], references: [id], onDelete: SetNull)
   activities      LeadActivity[]
   client          Client?
+  reminders       Reminder[]
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
@@ -113,4 +115,22 @@ model Client {
   updatedAt    DateTime @updatedAt
 
   @@index([createdAt])
+}
+
+model Reminder {
+  id          String   @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  dueAt       DateTime
+  completedAt DateTime?
+  userId      String   @db.Uuid
+  leadId      String?  @db.Uuid
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lead        Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, dueAt])
+  @@index([userId, completedAt])
+  @@index([leadId])
 }

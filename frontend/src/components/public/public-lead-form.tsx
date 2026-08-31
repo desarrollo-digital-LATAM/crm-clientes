@@ -36,12 +36,14 @@ function field(
   name: keyof PublicLeadFormValues,
   label: string,
   options: InputHTMLAttributes<HTMLInputElement> & { required?: boolean } = {},
+  error?: string,
 ) {
   const { required, ...inputProps } = options;
   return (
     <label className="block text-sm font-medium">
       {label}{required && ' *'}
-      <input {...inputProps} aria-required={required || undefined} className="mt-2 w-full rounded-lg border border-[var(--border)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]" />
+      <input {...inputProps} id={`lead-${name}`} aria-required={required || undefined} aria-invalid={Boolean(error)} aria-describedby={error ? `lead-${name}-error` : undefined} className={`mt-2 w-full rounded-lg border bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] ${error ? 'border-[var(--danger)]/70' : 'border-[var(--border)]'}`} />
+      {error && <p id={`lead-${name}-error`} className="mt-1.5 text-sm font-normal text-[var(--danger)]">{error}</p>}
     </label>
   );
 }
@@ -50,12 +52,14 @@ function textareaField(
   name: keyof PublicLeadFormValues,
   label: string,
   options: TextareaHTMLAttributes<HTMLTextAreaElement> & { required?: boolean } = {},
+  error?: string,
 ) {
   const { required, ...inputProps } = options;
   return (
     <label className="block text-sm font-medium">
       {label}{required && ' *'}
-      <textarea {...inputProps} aria-required={required || undefined} className="mt-2 w-full resize-y rounded-lg border border-[var(--border)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]" />
+      <textarea {...inputProps} id={`lead-${name}`} aria-required={required || undefined} aria-invalid={Boolean(error)} aria-describedby={error ? `lead-${name}-error` : undefined} className={`mt-2 w-full resize-y rounded-lg border bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition placeholder:text-[var(--muted-foreground)] hover:border-[var(--primary)]/60 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] ${error ? 'border-[var(--danger)]/70' : 'border-[var(--border)]'}`} />
+      {error && <p id={`lead-${name}-error`} className="mt-1.5 text-sm font-normal text-[var(--danger)]">{error}</p>}
     </label>
   );
 }
@@ -65,16 +69,18 @@ function selectField(
   label: string,
   options: readonly string[],
   selectProps: React.SelectHTMLAttributes<HTMLSelectElement> = {},
+  error?: string,
 ) {
   return (
     <label className="block text-sm font-medium">
       {label}
-      <select {...selectProps} className="mt-2 w-full rounded-lg border border-[var(--border)] bg-white px-3 py-2.5 text-sm outline-none transition focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)]">
+      <select {...selectProps} id={`lead-${name}`} aria-invalid={Boolean(error)} aria-describedby={error ? `lead-${name}-error` : undefined} className={`mt-2 w-full rounded-lg border bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--foreground)] outline-none transition hover:border-[var(--primary)]/60 focus:border-[var(--primary)] focus:ring-1 focus:ring-[var(--primary)] ${error ? 'border-[var(--danger)]/70' : 'border-[var(--border)]'}`}>
         <option value="">Seleccionar...</option>
         {options.map((opt) => (
           <option key={opt} value={opt}>{opt}</option>
         ))}
       </select>
+      {error && <p id={`lead-${name}-error`} className="mt-1.5 text-sm font-normal text-[var(--danger)]">{error}</p>}
     </label>
   );
 }
@@ -138,17 +144,16 @@ export function PublicLeadForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-6">
       <div className="grid gap-5 sm:grid-cols-2">
-        {field('name', 'Nombre', { type: 'text', required: true, maxLength: PUBLIC_LEAD_LIMITS.name })}
-        {field('company', 'Empresa', { type: 'text', maxLength: PUBLIC_LEAD_LIMITS.company })}
-        {field('email', 'Correo electrónico', { type: 'email', maxLength: PUBLIC_LEAD_LIMITS.email, autoCapitalize: 'none' })}
-        {field('phone', 'Teléfono', { type: 'tel', inputMode: 'tel', maxLength: PUBLIC_LEAD_LIMITS.phoneInput })}
-        {selectField('serviceInterest', 'Servicio de interés', SERVICES)}
-        {field('sourceDetail', '¿Cómo nos conociste?', { type: 'text', maxLength: PUBLIC_LEAD_LIMITS.sourceDetail })}
-        {field('estimatedBudget', 'Presupuesto estimado (opcional)', { type: 'number', min: 0, max: PUBLIC_LEAD_LIMITS.estimatedBudget, step: 0.01 })}
+        {field('name', 'Nombre', { ...register('name'), type: 'text', required: true, maxLength: PUBLIC_LEAD_LIMITS.name }, errors.name?.message)}
+        {field('company', 'Empresa', { ...register('company'), type: 'text', maxLength: PUBLIC_LEAD_LIMITS.company }, errors.company?.message)}
+        {field('email', 'Correo electrónico', { ...register('email'), type: 'email', maxLength: PUBLIC_LEAD_LIMITS.email, autoCapitalize: 'none' }, errors.email?.message)}
+        {field('phone', 'Teléfono', { ...register('phone'), type: 'tel', inputMode: 'tel', maxLength: PUBLIC_LEAD_LIMITS.phoneInput }, errors.phone?.message)}
+        {selectField('serviceInterest', 'Servicio de interés', SERVICES, register('serviceInterest'), errors.serviceInterest?.message)}
+        {field('sourceDetail', '¿Cómo nos conociste?', { ...register('sourceDetail'), type: 'text', maxLength: PUBLIC_LEAD_LIMITS.sourceDetail }, errors.sourceDetail?.message)}
+        {field('estimatedBudget', 'Presupuesto estimado (opcional)', { ...register('estimatedBudget'), type: 'number', min: 0, max: PUBLIC_LEAD_LIMITS.estimatedBudget, step: 0.01, placeholder: 'S/ 0.00' }, errors.estimatedBudget?.message)}
       </div>
       <p className="text-sm text-[var(--muted-foreground)]">Debes indicar un correo electrónico o un teléfono.</p>
-      {textareaField('message', 'Mensaje', { rows: 5, required: true, maxLength: PUBLIC_LEAD_LIMITS.message })}
-      {errors.message && <p className="text-sm text-[var(--danger)]">{errors.message.message}</p>}
+      {textareaField('message', 'Mensaje', { ...register('message'), rows: 5, required: true, maxLength: PUBLIC_LEAD_LIMITS.message }, errors.message?.message)}
       <input type="hidden" {...register('website')} tabIndex={-1} autoComplete="off" />
       {error && (
         <div className="rounded-lg border border-[var(--danger)] bg-[var(--danger)]/10 px-4 py-3 text-sm text-[var(--danger)] flex items-center gap-2">

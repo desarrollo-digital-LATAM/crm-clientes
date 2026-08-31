@@ -54,6 +54,14 @@ describe('LeadsService', () => {
     expect(result.data[0].estimatedBudget).toBeNull();
   });
 
+  it('returns a limited, grouped pipeline ordered by follow-up', async () => {
+    const { service, prisma } = createService();
+    const result = await service.findPipeline({ search: 'acme' });
+    expect(Object.keys(result)).toEqual(Object.values(LeadStatus));
+    expect(result.NEW).toHaveLength(1);
+    expect(prisma.lead.findMany).toHaveBeenCalledWith(expect.objectContaining({ select: expect.objectContaining({ id: true, name: true, status: true }), take: 1000 }));
+  });
+
   it('returns 404 when the lead does not exist', async () => {
     const { service, prisma } = createService();
     (prisma.lead.findUnique as jest.Mock).mockResolvedValue(null);
