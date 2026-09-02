@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Bell, Check, Plus, Trash2 } from "lucide-react";
+import { Bell, Check, LoaderCircle, Plus, Trash2 } from "lucide-react";
 import {
   EntityMentionInput,
   type MentionEntity,
@@ -14,7 +14,7 @@ import {
   reminderKeys,
   updateReminder,
 } from "../../../lib/api/reminders";
-import type { ReminderFilters } from "../../../types/reminders";
+import type { Reminder, ReminderFilters } from "../../../types/reminders";
 
 const tabs: Array<{ label: string; filters: ReminderFilters }> = [
   { label: "Pendientes", filters: { status: "pending" } },
@@ -35,9 +35,11 @@ export default function RemindersPage() {
   const [selectedEntity, setSelectedEntity] = useState<MentionEntity | null>(
     null,
   );
+  const [mutationError, setMutationError] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const queryKey = reminderKeys.list(filters);
   const query = useQuery({
-    queryKey: reminderKeys.list(filters),
+    queryKey,
     queryFn: () => fetchReminders(filters),
   });
   const mutation = useMutation({
@@ -48,8 +50,29 @@ export default function RemindersPage() {
       id: string;
       completedAt: string | null;
     }) => updateReminder(id, { completedAt }),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: reminderKeys.all }),
+    onMutate: async ({ id, completedAt }) => {
+      setMutationError(null);
+      await queryClient.cancelQueries({ queryKey: reminderKeys.all });
+      const previous = queryClient.getQueriesData<Reminder[]>({
+        queryKey: reminderKeys.lists(),
+      });
+      previous.forEach(([cachedQueryKey, current]) => {
+        queryClient.setQueryData(
+          cachedQueryKey,
+          current?.map((reminder) =>
+            reminder.id === id ? { ...reminder, completedAt } : reminder,
+          ),
+        );
+      });
+      return { previous };
+    },
+    onError: (_error, _variables, context) => {
+      context?.previous.forEach(([cachedQueryKey, previous]) => {
+        queryClient.setQueryData(cachedQueryKey, previous);
+      });
+      setMutationError("No pudimos actualizar el recordatorio. Intenta nuevamente.");
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: reminderKeys.all }),
   });
   const create = useMutation({
     mutationFn: () => createReminder({ ...form, leadId: form.leadId || null }),
@@ -126,13 +149,25 @@ export default function RemindersPage() {
         ))}
       </div>
       <section className="mt-4 overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)]">
-        {query.isLoading ? (
-          <div className="space-y-3 p-6" aria-hidden="true">
+        {mutationError && (
+          <p className="border-b border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700" role="alert">
+            {mutationError}
+          </p>
+        )}
+        {query.isPending ? (
+          <div className="space-y-3 p-4" aria-busy="true" aria-label="Cargando recordatorios">
             {[1, 2, 3].map((item) => (
               <div
                 key={item}
-                className="h-12 animate-pulse rounded-lg bg-[var(--surface-elevated)]"
-              />
+                className="flex items-center gap-3 rounded-xl border border-[var(--border-subtle)] p-3"
+                aria-hidden="true"
+              >
+                <div className="h-7 w-7 shrink-0 animate-pulse rounded-full bg-[var(--surface-elevated)]" />
+                <div className="min-w-0 flex-1 space-y-2">
+                  <div className="h-3 w-3/5 animate-pulse rounded bg-[var(--surface-elevated)]" />
+                  <div className="h-2.5 w-2/5 animate-pulse rounded bg-[var(--surface-elevated)]" />
+                </div>
+              </div>
             ))}
           </div>
         ) : query.isError ? (
@@ -159,6 +194,7 @@ export default function RemindersPage() {
                     ? "Reabrir recordatorio"
                     : "Completar recordatorio"
                 }
+                disabled={mutation.isPending}
                 onClick={() =>
                   mutation.mutate({
                     id: reminder.id,
@@ -167,9 +203,9 @@ export default function RemindersPage() {
                       : new Date().toISOString(),
                   })
                 }
-                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border ${reminder.completedAt ? "border-green-500 bg-green-500 text-white" : "border-[var(--border)] text-transparent hover:border-blue-500"}`}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border transition-colors disabled:cursor-wait disabled:opacity-70 ${reminder.completedAt ? "border-green-500 bg-green-500 text-white" : "border-[var(--border)] text-transparent hover:border-blue-500"}`}
               >
-                <Check size={15} />
+                {mutation.isPending && mutation.variables?.id === reminder.id ? <LoaderCircle size={15} className="animate-spin text-blue-600" /> : <Check size={15} />}
               </button>
               <div className="min-w-0 flex-1">
                 <p

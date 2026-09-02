@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '../../lib/api/auth';
 import { ApiError } from '../../lib/api/client';
+import { Brand } from '../../components/brand';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -35,7 +36,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-6 text-slate-900">
       <section className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <p className="text-sm font-medium text-slate-500">CRM Clientes</p>
+        <Brand />
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Iniciar sesión</h1>
         <p className="mt-2 text-sm text-slate-600">Accede al espacio interno del equipo.</p>
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>

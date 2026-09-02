@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+const API_URL = '/api';
 
 export class ApiError extends Error {
   constructor(message: string, public readonly status?: number) {
@@ -14,8 +14,6 @@ function timeoutError() {
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
-  if (!API_URL) throw new ApiError('La API no está configurada.');
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
   let response: Response;
