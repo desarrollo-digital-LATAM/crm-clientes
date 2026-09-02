@@ -20,9 +20,14 @@ describe('AuthController', () => {
     }));
   });
 
-  it('returns currentUser from /auth/me without secrets', () => {
-    const authService = { toPublicUser: jest.fn().mockReturnValue(user) } as unknown as AuthService;
-    expect(new AuthController(authService).me(user)).toEqual(user);
+  it.each([
+    ['ADMIN', 'ADMIN'],
+    ['MEMBER', 'MEMBER'],
+  ] as const)('returns %s role from /auth/me without secrets', (role, expectedRole) => {
+    const currentUser = { ...user, role: role as 'ADMIN' | 'MEMBER' };
+    const authService = { toPublicUser: jest.fn().mockReturnValue(currentUser) } as unknown as AuthService;
+    expect(new AuthController(authService).me(currentUser)).toEqual(expect.objectContaining({ id: user.id, name: user.name, email: user.email, role: expectedRole }));
+    expect(authService.toPublicUser).toHaveBeenCalledWith(currentUser);
   });
 
   it('revokes the session and clears the cookie on logout', async () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Bell, Building2, LayoutDashboard, PanelLeftClose, PanelLeftOpen, Users } from 'lucide-react';
+import { Bell, Building2, LayoutDashboard, PanelLeftClose, PanelLeftOpen, Settings, Users } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { Brand } from '../brand';
 
@@ -12,7 +12,9 @@ const links = [
   { href: '/recordatorios', label: 'Recordatorios', Icon: Bell },
 ];
 
-type User = { name: string | null; email: string };
+const settingsLinks = [{ href: '/usuarios', label: 'Usuarios', Icon: Settings }];
+
+type User = { name: string | null; email: string; role?: 'ADMIN' | 'MEMBER' };
 
 export function AppSidebar({
   onNavigate,
@@ -72,6 +74,14 @@ export function AppSidebar({
               )}
             </Link>
           );
+        })}
+      </nav>
+
+      <nav aria-label="Configuración" className="mt-auto border-t border-[var(--sidebar-border)] px-3 py-5">
+        {!collapsed && <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">Configuración</p>}
+        {(user?.role === 'ADMIN' ? settingsLinks : []).map(({ href, label, Icon }) => {
+          const active = pathname === href || pathname.startsWith(`${href}/`);
+          return <Link key={href} href={href} onClick={onNavigate} aria-current={active ? 'page' : undefined} aria-label={collapsed ? label : undefined} className={`group relative flex min-h-11 items-center rounded-lg text-[15px] transition-colors ${collapsed ? 'justify-center px-0' : 'gap-3 px-3'} ${active ? 'bg-blue-500/15 font-semibold text-white' : 'text-slate-300 hover:bg-white/5 hover:text-white'}`}><Icon size={19} strokeWidth={active ? 2.2 : 1.9} />{!collapsed && label}{collapsed && <span role="tooltip" className="pointer-events-none absolute left-full z-20 ml-3 hidden whitespace-nowrap rounded-lg bg-slate-950 px-3 py-2 text-sm font-medium text-white shadow-lg group-hover:block group-focus-visible:block">{label}</span>}</Link>;
         })}
       </nav>
 

@@ -8,7 +8,7 @@ import { NotificationBell } from '../notifications/notification-bell';
 
 export function AppHeader({ user, onMenu }: { user: { name: string | null; email: string }; onMenu: () => void }) {
   const pathname = usePathname();
-  const title = pathname.startsWith('/leads') ? 'Leads' : pathname.startsWith('/clientes') ? 'Clientes' : pathname.startsWith('/notificaciones') ? 'Notificaciones' : 'Dashboard';
+  const title = pathname.startsWith('/leads') ? 'Leads' : pathname.startsWith('/clientes') ? 'Clientes' : pathname.startsWith('/notificaciones') ? 'Notificaciones' : pathname.startsWith('/usuarios') ? 'Usuarios' : 'Dashboard';
 
   return (
     <header className="flex min-h-[76px] items-center justify-between gap-4 border-b border-[var(--border)] bg-[var(--surface)] px-5 sm:px-10">

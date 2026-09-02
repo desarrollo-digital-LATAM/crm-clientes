@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { login } from '../../lib/api/auth';
 import { ApiError } from '../../lib/api/client';
 import { Brand } from '../../components/brand';
+import { inputClass, PasswordInput } from '../../components/users/password-input';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -42,11 +43,11 @@ export default function LoginPage() {
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium">
             Correo electrónico
-            <input className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-slate-500" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
+            <input className={`${inputClass} mt-2`} type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" />
           </label>
           <label className="block text-sm font-medium">
             Contraseña
-            <input className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2.5 font-normal outline-none focus:border-slate-500" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required autoComplete="current-password" />
+            <PasswordInput id="login-password" value={password} onChange={setPassword} autoComplete="current-password" />
           </label>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">{error}</p>}
           <button className="w-full rounded-lg bg-slate-900 px-4 py-2.5 font-medium text-white disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={loading}>
